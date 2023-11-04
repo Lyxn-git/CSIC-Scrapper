@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from datetime import date
 
 
 
@@ -14,14 +15,12 @@ while True: #Iterate over all pages
     response = requests.get(url=base_url+str(page_number)) #gets the html of webpage using page number and base url
     soup = BeautifulSoup(response.text, "html.parser") #parses it as Soup Object
     
-    
     article = soup.find("article")
     if article == None: #Checks if page is empty
         break
 
     if page_number > 30: #failsafe method to not iterate to infinity
         break
-
 
     views_row_divs = soup.find_all("div", attrs={"class" : "views-row"}) # finds all divs which class is "views-row"
     description_divs = soup.find_all("div", attrs={"class": "field field--name-body field--type-text-with-summary field--label-hidden field__item"}) # finds all divs which class is "field field..."
@@ -33,15 +32,16 @@ while True: #Iterate over all pages
         description = desc_div.text # Extracts description of the offer
         url = row_div.article.attrs["about"] # Extracts relative url of the offer
 
-        complete_url = "https://www.csic.es" + url
+        complete_url = "https://www.csic.es" + url #Completes the url with the base URL for the CSIC website
         row = [title, description, complete_url]
 
-        row_df = pd.DataFrame([row], columns=df.columns)
-
-        df = pd.concat([df, row_df], ignore_index=True)
+        row_df = pd.DataFrame([row], columns=df.columns) #Creates a row df (notice the brakets on the list)
+        df = pd.concat([df, row_df], ignore_index=True) #Concatenates the row to the existing df
 
  
     page_number += 1 #Goes to next page
 
-df.to_excel("output.xlsx")
+today = date.today()
+
+df.to_excel(f"output_{today.year}.{today.month}.{today.day}.xlsx") #Timestamps the output
 print(df)
